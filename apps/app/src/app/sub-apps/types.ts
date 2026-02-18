@@ -5,12 +5,19 @@ import type { RouteObject } from 'react-router-dom';
 /**
  * Contract every sub-app must satisfy.
  *
+ * Generic over the Redux slice it owns:
+ *  - `SubAppDescriptor`              — no slice (pure-UI sub-app)
+ *  - `SubAppDescriptor<typeof mySlice>` — owns `mySlice`; full state, reducer,
+ *    name and selector types are preserved via `typeof`.
+ *
  * A sub-app is lazy-loaded via dynamic `import()` (code splitting). When its
  * route is first matched React Router calls the `lazy` loader, which imports
- * the sub-app module, injects its Redux slice into the store (if it has one),
- * and returns the root component to render.
+ * the sub-app module, injects its slice into the store (if present), and
+ * returns the root component to render.
  */
-export interface SubAppDescriptor {
+export interface SubAppDescriptor<
+  TSlice extends Slice | undefined = undefined,
+> {
   /** Unique identifier used for navigation state and debugging. */
   id: string;
 
@@ -18,15 +25,14 @@ export interface SubAppDescriptor {
    * The root React component returned to React Router's `lazy` loader.
    * This is what gets rendered at the sub-app's mount path.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  RootComponent: ComponentType<any>;
+  RootComponent: ComponentType;
 
   /**
-   * Optional Redux slice.  Will be injected into the store via
-   * `rootReducer.inject(slice)` the first time the sub-app is loaded.
+   * Optional Redux slice injected into the store on first load.
+   * Pass `typeof mySlice` as the type argument to preserve the full inferred
+   * slice type (state shape, action creators, selectors).
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  slice?: Slice<any, any, any>;
+  slice?: TSlice;
 
   /**
    * Optional additional React Router route objects owned by this sub-app
