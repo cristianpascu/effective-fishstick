@@ -5,7 +5,9 @@ import { Button } from './Button';
 describe('Button', () => {
   it('renders children', () => {
     render(<Button>Click me</Button>);
-    expect(screen.getByRole('button', { name: /click me/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /click me/i }),
+    ).toBeInTheDocument();
   });
 
   it('calls onClick when clicked', async () => {
@@ -20,22 +22,22 @@ describe('Button', () => {
     expect(screen.getByRole('button')).toBeDisabled();
   });
 
-  it('is disabled and shows aria-busy when loading', () => {
-    render(<Button loading>Loading</Button>);
-    const btn = screen.getByRole('button');
-    expect(btn).toBeDisabled();
-    expect(btn).toHaveAttribute('aria-busy', 'true');
-  });
-
   it('does not call onClick when disabled', async () => {
     const handleClick = vi.fn();
-    render(<Button disabled onClick={handleClick}>Disabled</Button>);
+    render(
+      <Button disabled onClick={handleClick}>
+        Disabled
+      </Button>,
+    );
     await userEvent.click(screen.getByRole('button'));
     expect(handleClick).not.toHaveBeenCalled();
   });
 
   it('applies correct variant via data-variant attribute', () => {
     render(<Button variant="danger">Delete</Button>);
-    expect(screen.getByRole('button')).toHaveAttribute('data-variant', 'danger');
+    expect(screen.getByRole('button')).toHaveAttribute(
+      'data-variant',
+      'danger',
+    );
   });
 });

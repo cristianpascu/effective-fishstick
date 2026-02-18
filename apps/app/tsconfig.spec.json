@@ -1,6 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "forceConsistentCasingInFileNames": true,
     "outDir": "./out-tsc/vitest",
     "types": [
       "vitest/globals",
@@ -8,6 +9,7 @@
       "vite/client",
       "node",
       "vitest",
+      "@testing-library/jest-dom",
       "@nx/react/typings/cssmodule.d.ts",
       "@nx/react/typings/image.d.ts"
     ],

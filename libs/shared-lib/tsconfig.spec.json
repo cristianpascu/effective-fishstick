@@ -7,9 +7,11 @@
       "vitest/importMeta",
       "vite/client",
       "node",
-      "vitest"
+      "vitest",
+      "@testing-library/jest-dom"
     ],
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "forceConsistentCasingInFileNames": true
   },
   "include": [
     "vite.config.ts",

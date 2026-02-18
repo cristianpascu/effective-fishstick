@@ -1,5 +1,13 @@
 {
   "name": "@r360-applicationconsole-ui/app",
   "version": "0.0.1",
-  "private": true
+  "private": true,
+  "scripts": {
+    "start": "nx serve app",
+    "build": "nx build app",
+    "test": "nx test app",
+    "test:coverage": "nx test app --configuration=coverage",
+    "lint": "nx lint app",
+    "preview": "vite preview --config vite.config.mts"
+  }
 }

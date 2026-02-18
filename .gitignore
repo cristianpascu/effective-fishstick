@@ -5,6 +5,9 @@ dist
 tmp
 out-tsc
 
+.nx/
+.vscode/
+
 # dependencies
 node_modules
 
