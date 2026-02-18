@@ -1,101 +1,217 @@
-# R360ApplicationconsoleUi
+# R360 Application Console UI
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+An Nx monorepo hosting the R360 Application Console — a shell-based React application where each feature area is a self-contained **sub-app** loaded on demand via code splitting.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+## Workspace structure
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/getting-started/tutorials/react-monorepo-tutorial?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+```txt
+apps/
+  app/                        # Shell application
+    src/app/
+      app.tsx                 # Root: Redux Provider + RouterProvider
+      shell/                  # Persistent nav bar + <Outlet>
+      store/                  # Shared Redux store (dynamic slice injection)
+      router/                 # createBrowserRouter with lazy sub-app routes
+      sub-apps/
+        types.ts              # SubAppDescriptor<TSlice> interface
+        dashboard/            # Dashboard sub-app
+        settings/             # Settings sub-app
+libs/
+  shared-lib/                 # Shared React components and hooks
+```
 
-## Run tasks
+## Running the project
 
-To run the dev server for your app, use:
+### Prerequisites
+
+```sh
+npm install
+```
+
+### Development server
 
 ```sh
 npx nx serve app
 ```
 
-To create a production bundle:
+Starts the Vite dev server at `http://localhost:4200` with HMR enabled.
+
+### Production build
 
 ```sh
 npx nx build app
 ```
 
-To see all available targets to run for a project, run:
+Output goes to `dist/apps/app/`. Each sub-app is emitted as a separate chunk by Vite's code splitter.
+
+### Tests
 
 ```sh
+# Run all tests across the workspace
+npx nx run-many -t test
+
+# Run tests for a single project
+npx nx test app
+npx nx test shared-lib
+
+# Watch mode
+npx nx test app --watch
+```
+
+### Linting
+
+```sh
+npx nx run-many -t lint
+```
+
+### Explore the project graph
+
+```sh
+npx nx graph
+```
+
+## Architecture: Shell + Sub-apps
+
+The application is split into a **shell** and any number of **sub-apps**.
+
+| Layer | Responsibility |
+| --- | --- |
+| `app.tsx` | Mounts the Redux `<Provider>` and React Router `<RouterProvider>` |
+| `Shell` | Renders the persistent navigation bar and an `<Outlet>` wrapped in `<Suspense>` |
+| `router/router.tsx` | Declares routes; each sub-app route uses React Router's `lazy` to split the chunk |
+| `store/rootReducer.ts` | `combineSlices(...).withLazyLoadedSlices()` — sub-app slices are injected at runtime |
+| `sub-apps/<name>/` | Self-contained feature: own Redux slice, pages, and a `SubAppDescriptor` export |
+
+### How sub-app loading works
+
+1. User navigates to a route owned by a sub-app.
+2. React Router calls its `lazy` loader → dynamic `import()` of the sub-app chunk.
+3. The loader injects the sub-app's Redux slice: `rootReducer.inject(subApp.slice)`.
+4. The loader returns `{ Component: subApp.RootComponent }` — React Router renders it inside the Shell's `<Outlet>`.
+
+The slice state is typed as `T | undefined` until injected (via `withLazyLoadedSlices`), so selectors inside sub-app pages must handle the `undefined` case — typically with a `?? fallback`.
+
+## Adding a new sub-app
+
+### 1. Create the sub-app directory
+
+```txt
+apps/app/src/app/sub-apps/<name>/
+  index.tsx                 # SubAppDescriptor export  ← required
+  pages/
+    <Name>Page.tsx
+    <Name>Page.module.css
+  store/
+    <name>Slice.ts          # optional — omit if no Redux state needed
+```
+
+### 2. Define the Redux slice (optional)
+
+```ts
+// store/<name>Slice.ts
+import { createSlice } from '@reduxjs/toolkit';
+
+export const mySlice = createSlice({
+  name: 'myFeature',
+  initialState: { /* ... */ },
+  reducers: { /* ... */ },
+});
+```
+
+Declare it in `rootReducer.ts` so TypeScript knows the state shape is optionally present:
+
+```ts
+// store/rootReducer.ts
+import type { mySlice } from '../sub-apps/<name>/store/<name>Slice';
+
+export const rootReducer = combineSlices(appSlice).withLazyLoadedSlices<
+  // add the new slice to the intersection:
+  WithSlice<typeof dashboardSlice> & WithSlice<typeof settingsSlice> & WithSlice<typeof mySlice>
+>();
+```
+
+### 3. Export a SubAppDescriptor
+
+```ts
+// sub-apps/<name>/index.tsx
+import type { SubAppDescriptor } from '../types';
+import { mySlice } from './store/<name>Slice';   // omit if no slice
+import { MyPage } from './pages/MyPage';
+
+export const MySubApp: SubAppDescriptor<typeof mySlice> = {
+  id: 'my-feature',
+  RootComponent: MyPage,
+  slice: mySlice,            // omit if no slice
+};
+```
+
+For a pure-UI sub-app with no Redux state:
+
+```ts
+export const MySubApp: SubAppDescriptor = {
+  id: 'my-feature',
+  RootComponent: MyPage,
+};
+```
+
+### 4. Register the route
+
+In `router/router.tsx`, add a child route inside the Shell route:
+
+```ts
+{
+  path: 'my-feature/*',
+  lazy: async () => {
+    const { MySubApp } = await import('../sub-apps/<name>');
+    if (MySubApp.slice) rootReducer.inject(MySubApp.slice);
+    return { Component: MySubApp.RootComponent };
+  },
+},
+```
+
+### 5. Add a nav link
+
+In `shell/Shell.tsx`, add an entry to `NAV_ITEMS`:
+
+```ts
+const NAV_ITEMS = [
+  { to: '/',           label: 'Dashboard',  end: true  },
+  { to: '/settings',   label: 'Settings',   end: false },
+  { to: '/my-feature', label: 'My Feature', end: false }, // ← new
+];
+```
+
+### Moving a sub-app to its own package
+
+When a sub-app outgrows `apps/app/src/`, it can be promoted to a dedicated library:
+
+```sh
+npx nx g @nx/react:lib my-feature
+```
+
+Move the sub-app directory into the new library, update the dynamic import path in `router/router.tsx`, and let `nx sync` update the TypeScript project references automatically.
+
+## Shared library (`libs/shared-lib`)
+
+Reusable components and hooks consumed by any sub-app or the shell. Import from the package alias:
+
+```ts
+import { Button, useCounter } from '@r360/shared-lib';
+```
+
+To add new exports, add them to `libs/shared-lib/src/index.ts`.
+
+## Nx workspace management
+
+```sh
+# Sync TypeScript project references (run after adding/removing imports)
+npx nx sync
+
+# List all available targets for a project
 npx nx show project app
-```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
-
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Add new projects
-
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
-
-Use the plugin's generator to create new projects.
-
-To generate a new application, use:
-
-```sh
-npx nx g @nx/react:app demo
-```
-
-To generate a new library, use:
-
-```sh
+# Generate a new library
 npx nx g @nx/react:lib mylib
 ```
 
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
-
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Set up CI!
-
-### Step 1
-
-To connect to Nx Cloud, run the following command:
-
-```sh
-npx nx connect
-```
-
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
-
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-### Step 2
-
-Use the following command to configure a CI workflow for your workspace:
-
-```sh
-npx nx g ci-workflow
-```
-
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Install Nx Console
-
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
-
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Useful links
-
-Learn more:
-
-- [Learn more about this workspace setup](https://nx.dev/getting-started/tutorials/react-monorepo-tutorial?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+TypeScript project references are managed automatically by the `@nx/js:typescript-sync` generator — do not edit `references` arrays in `tsconfig` files by hand.
