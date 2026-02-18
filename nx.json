@@ -50,7 +50,7 @@
     {
       "plugin": "@nx/vitest",
       "options": {
-        "testTargetName": "test",
+        "testTargetName": "vitest:test",
         "ciTargetName": "test-ci",
         "testMode": "watch"
       }
@@ -74,7 +74,8 @@
       },
       "library": {
         "style": "css",
-        "linter": "eslint"
+        "linter": "eslint",
+        "unitTestRunner": "vitest"
       }
     }
   }
