@@ -1,15 +1,21 @@
 import type { SubAppDescriptor } from '../types';
 import { dashboardSlice } from './store/dashboardSlice';
 import { DashboardPage } from './pages/DashboardPage';
+import { OverviewPage } from './pages/OverviewPage';
+import { EventsPage } from './pages/EventsPage';
 
 /**
  * Dashboard sub-app descriptor.
  *
- * Loaded lazily via React Router's `lazy` mechanism in `router/router.tsx`.
- * On first load the `dashboardSlice` is injected into the shared Redux store.
+ * The `RootComponent` provides the sub-app shell/layout and the nested
+ * `routes` define its pages (`Overview`, `Events`).
  */
 export const DashboardSubApp: SubAppDescriptor<typeof dashboardSlice> = {
   id: 'dashboard',
   RootComponent: DashboardPage,
   slice: dashboardSlice,
+  routes: [
+    { index: true, Component: OverviewPage },
+    { path: 'events', Component: EventsPage },
+  ],
 };

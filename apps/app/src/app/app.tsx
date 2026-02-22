@@ -8,11 +8,12 @@ import { router } from './router/router';
  *
  * Responsibilities:
  *  - Provides the Redux store to the entire component tree.
- *  - Renders the data router (React Router v6) which handles code-split sub-apps.
+ *  - Renders the data router (React Router v6) that mounts the shell and
+ *    sub-app route trees.
  *
  * The BrowserRouter that was previously in main.tsx is replaced by
- * RouterProvider + createBrowserRouter so that lazy route loaders (which
- * inject sub-app slices before first render) work correctly.
+ * RouterProvider + createBrowserRouter so route loaders can inject
+ * sub-app slices before first render.
  */
 export function App() {
   return (

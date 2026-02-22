@@ -25,10 +25,21 @@ describe('App', () => {
 
   it('should lazy-load and display the Dashboard sub-app on the root route', async () => {
     renderApp();
-    // The index route lazy-imports the Dashboard chunk
+    // Dashboard sub-app should be active at the root route
     await waitFor(() =>
       expect(
         screen.getByRole('heading', { name: 'Dashboard' }),
+      ).toBeInTheDocument(),
+    );
+  });
+
+  it('should navigate to the Dashboard Events page', async () => {
+    renderApp();
+    const eventsLink = await screen.findByRole('link', { name: 'Events' });
+    await userEvent.click(eventsLink);
+    await waitFor(() =>
+      expect(
+        screen.getByRole('heading', { name: 'Events' }),
       ).toBeInTheDocument(),
     );
   });
@@ -40,6 +51,21 @@ describe('App', () => {
     await waitFor(() =>
       expect(
         screen.getByRole('heading', { name: 'Settings' }),
+      ).toBeInTheDocument(),
+    );
+  });
+
+  it('should navigate to the Settings Advanced page', async () => {
+    renderApp();
+    const settingsLink = await screen.findByRole('link', { name: 'Settings' });
+    await userEvent.click(settingsLink);
+
+    const advancedLink = await screen.findByRole('link', { name: 'Advanced' });
+    await userEvent.click(advancedLink);
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('heading', { name: 'Advanced' }),
       ).toBeInTheDocument(),
     );
   });

@@ -1,40 +1,37 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { Shell } from '../shell/Shell';
 import { rootReducer } from '../store/rootReducer';
+import { DashboardSubApp } from '../sub-apps/dashboard';
+import { SettingsSubApp } from '../sub-apps/settings';
+
+const SUB_APP_ROUTES = [
+  { path: undefined, descriptor: DashboardSubApp },
+  { path: 'settings/*', descriptor: SettingsSubApp },
+] as const;
 
 /**
  * Application router.
  *
- * Each sub-app is split into its own chunk via React Router's `lazy` loader.
- * The loader dynamically imports the sub-app module, injects its Redux slice
- * into the shared store (so state is ready before first render), then returns
- * the root component.
+ * Sub-app routes are declared by each descriptor and registered under the
+ * shared shell. Before rendering a sub-app route, its Redux slice (if any)
+ * is injected into the shared store via the route loader.
  *
  * Adding a new sub-app:
  *  1. Create `src/app/sub-apps/<name>/index.tsx` exporting a `SubAppDescriptor`.
- *  2. Add a lazy route entry below pointing to that module.
+ *  2. Add its path + descriptor to `SUB_APP_ROUTES`.
  */
 export const router = createBrowserRouter([
   {
     path: '/',
     element: <Shell />,
-    children: [
-      {
-        index: true,
-        lazy: async () => {
-          const { DashboardSubApp } = await import('../sub-apps/dashboard');
-          if (DashboardSubApp.slice) rootReducer.inject(DashboardSubApp.slice);
-          return { Component: DashboardSubApp.RootComponent };
-        },
+    children: SUB_APP_ROUTES.map(({ path, descriptor }) => ({
+      ...(path !== undefined ? { path } : {}),
+      loader: () => {
+        if (descriptor.slice) rootReducer.inject(descriptor.slice);
+        return null;
       },
-      {
-        path: 'settings/*',
-        lazy: async () => {
-          const { SettingsSubApp } = await import('../sub-apps/settings');
-          if (SettingsSubApp.slice) rootReducer.inject(SettingsSubApp.slice);
-          return { Component: SettingsSubApp.RootComponent };
-        },
-      },
-    ],
+      Component: descriptor.RootComponent,
+      children: descriptor.routes,
+    })),
   },
 ]);
