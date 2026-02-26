@@ -1,4 +1,3 @@
-import styles from './OverviewPage.module.css';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import {
   setTheme,
@@ -21,13 +20,18 @@ export function OverviewPage() {
 
   return (
     <div>
-      <h2 className={styles.heading}>Overview</h2>
+      <h2 className="mb-4 text-xl font-bold">Overview</h2>
 
-      <section className={styles.section}>
-        <h3>Theme</h3>
-        <div className={styles.options}>
+      <section className="mb-5 rounded-[10px] border border-slate-200 bg-slate-50 px-6 py-5">
+        <h3 className="mb-4 text-base font-semibold uppercase tracking-wide text-slate-700">
+          Theme
+        </h3>
+        <div className="flex flex-col gap-2">
           {THEMES.map(({ value, label }) => (
-            <label key={value} className={styles.option}>
+            <label
+              key={value}
+              className="flex cursor-pointer items-center gap-2 text-sm"
+            >
               <input
                 type="radio"
                 name="theme"
@@ -41,9 +45,11 @@ export function OverviewPage() {
         </div>
       </section>
 
-      <section className={styles.section}>
-        <h3>Notifications</h3>
-        <label className={styles.toggle}>
+      <section className="mb-5 rounded-[10px] border border-slate-200 bg-slate-50 px-6 py-5">
+        <h3 className="mb-4 text-base font-semibold uppercase tracking-wide text-slate-700">
+          Notifications
+        </h3>
+        <label className="flex cursor-pointer items-center gap-2 text-sm">
           <input
             type="checkbox"
             checked={notificationsEnabled}

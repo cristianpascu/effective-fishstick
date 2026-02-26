@@ -100,7 +100,6 @@ apps/app/src/app/sub-apps/<name>/
   index.tsx                 # SubAppDescriptor export  ← required
   pages/
     <Name>Page.tsx
-    <Name>Page.module.css
   store/
     <name>Slice.ts          # optional — omit if no Redux state needed
 ```

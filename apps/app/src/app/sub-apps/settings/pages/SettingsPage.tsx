@@ -1,18 +1,21 @@
-import styles from './SettingsPage.module.css';
 import { NavLink, Outlet } from 'react-router-dom';
 
 export function SettingsPage() {
   return (
-    <div className={styles.page}>
-      <h1 className={styles.heading}>Settings</h1>
-      <p className={styles.sub}>Application preferences.</p>
+    <div className="max-w-150">
+      <h1 className="mb-1 text-3xl font-bold">Settings</h1>
+      <p className="mb-4 text-slate-600">Application preferences.</p>
 
-      <nav className={styles.subNav} aria-label="Settings pages">
+      <nav className="mb-5 flex gap-2" aria-label="Settings pages">
         <NavLink
           to="."
           end
           className={({ isActive }) =>
-            isActive ? styles.subNavLinkActive : styles.subNavLink
+            `rounded-lg border px-3.5 py-2 text-sm no-underline ${
+              isActive
+                ? 'border-indigo-200 bg-indigo-50 text-slate-800'
+                : 'border-slate-300 bg-white text-slate-700'
+            }`
           }
         >
           Overview
@@ -20,14 +23,18 @@ export function SettingsPage() {
         <NavLink
           to="advanced"
           className={({ isActive }) =>
-            isActive ? styles.subNavLinkActive : styles.subNavLink
+            `rounded-lg border px-3.5 py-2 text-sm no-underline ${
+              isActive
+                ? 'border-indigo-200 bg-indigo-50 text-slate-800'
+                : 'border-slate-300 bg-white text-slate-700'
+            }`
           }
         >
           Advanced
         </NavLink>
       </nav>
 
-      <div className={styles.content}>
+      <div className="min-h-55">
         <Outlet />
       </div>
     </div>

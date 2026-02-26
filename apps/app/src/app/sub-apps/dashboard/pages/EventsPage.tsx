@@ -1,4 +1,3 @@
-import styles from './EventsPage.module.css';
 import { useAppSelector } from '../../../store/hooks';
 
 export function EventsPage() {
@@ -8,15 +7,15 @@ export function EventsPage() {
   );
 
   return (
-    <div className={styles.page}>
-      <h2 className={styles.heading}>Events</h2>
-      <p className={styles.sub}>Recent dashboard activity summary.</p>
+    <div className="max-w-225">
+      <h2 className="mb-1 text-xl font-bold">Events</h2>
+      <p className="mb-4 text-slate-600">Recent dashboard activity summary.</p>
 
-      <div className={styles.card}>
-        <p className={styles.event}>
+      <div className="rounded-[10px] border border-slate-200 bg-slate-50 px-6 py-5">
+        <p className="mb-2 text-slate-700">
           Widgets currently configured: {widgetCount}
         </p>
-        <p className={styles.event}>
+        <p className="m-0 text-slate-700">
           Last refresh event: {lastRefreshed ?? 'No refresh event yet'}
         </p>
       </div>

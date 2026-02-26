@@ -1,18 +1,23 @@
-import styles from './DashboardPage.module.css';
 import { NavLink, Outlet } from 'react-router-dom';
 
 export function DashboardPage() {
   return (
-    <div className={styles.page}>
-      <h1 className={styles.heading}>Dashboard</h1>
-      <p className={styles.sub}>Welcome to the R360 Application Console.</p>
+    <div className="max-w-225">
+      <h1 className="mb-1 text-3xl font-bold">Dashboard</h1>
+      <p className="mb-4 text-slate-600">
+        Welcome to the R360 Application Console.
+      </p>
 
-      <nav className={styles.subNav} aria-label="Dashboard pages">
+      <nav className="mb-5 flex gap-2" aria-label="Dashboard pages">
         <NavLink
           to="."
           end
           className={({ isActive }) =>
-            isActive ? styles.subNavLinkActive : styles.subNavLink
+            `rounded-lg border px-3.5 py-2 text-sm no-underline ${
+              isActive
+                ? 'border-indigo-200 bg-indigo-50 text-slate-800'
+                : 'border-slate-300 bg-white text-slate-700'
+            }`
           }
         >
           Overview
@@ -20,14 +25,18 @@ export function DashboardPage() {
         <NavLink
           to="events"
           className={({ isActive }) =>
-            isActive ? styles.subNavLinkActive : styles.subNavLink
+            `rounded-lg border px-3.5 py-2 text-sm no-underline ${
+              isActive
+                ? 'border-indigo-200 bg-indigo-50 text-slate-800'
+                : 'border-slate-300 bg-white text-slate-700'
+            }`
           }
         >
           Events
         </NavLink>
       </nav>
 
-      <div className={styles.content}>
+      <div className="min-h-50">
         <Outlet />
       </div>
     </div>
